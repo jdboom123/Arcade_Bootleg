@@ -2,28 +2,83 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-#define PACMAN_BLOCK_SIZE_IN_PIXELS 35
+#define PACMAN_BLOCK_SIZE_IN_PIXELS 16
+
+#define PACMAN_GAME_WIDTH 28U
+#define PACMAN_GAME_HEIGHT 36U
+
+#define SDL_WINDOW_WIDTH           (PACMAN_BLOCK_SIZE_IN_PIXELS * PACMAN_GAME_WIDTH)
+#define SDL_WINDOW_HEIGHT          (PACMAN_BLOCK_SIZE_IN_PIXELS * PACMAN_GAME_HEIGHT)
 
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 
+typedef struct
+{
+    unsigned char cells [PACMAN_GAME_WIDTH*PACMAN_GAME_HEIGHT];
+    char pacman_xpos;
+    char pacman_ypos;
+}PacManContext;
+
+typedef struct
+{
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    PacManContext pacman_ctx;
+    Uint64 last_step;
+} AppState;
+
+void pacman_initialize(PacManContext *ctx)
+{
+    SDL_zeroa(ctx->cells);
+    /* Change to appropiate locations later*/
+    ctx->pacman_xpos = 0;
+    ctx->pacman_ypos = 0;
+}
+
+// void snake_redir(SnakeContext *ctx, SnakeDirection dir)
+// {
+//     SnakeCell ct = snake_cell_at(ctx, ctx->head_xpos, ctx->head_ypos);
+//     if ((dir == SNAKE_DIR_RIGHT && ct != SNAKE_CELL_SLEFT) ||
+//         (dir == SNAKE_DIR_UP && ct != SNAKE_CELL_SDOWN) ||
+//         (dir == SNAKE_DIR_LEFT && ct != SNAKE_CELL_SRIGHT) ||
+//         (dir == SNAKE_DIR_DOWN && ct != SNAKE_CELL_SUP)) {
+//         ctx->next_dir = dir;
+//     }
+// }
+
 /* This function runs once at startup. */
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
-{
+{   
     /* Create the window */
-    if (!SDL_CreateWindowAndRenderer("BOOTLEG PAC-MAN", 800, 600, SDL_WINDOW_FULLSCREEN, &window, &renderer)) {
+    if (!SDL_CreateWindowAndRenderer("BOOTLEG PAC-MAN", SDL_WINDOW_WIDTH, SDL_WINDOW_HEIGHT, 0, &window, &renderer)) {
         SDL_Log("Couldn't create window and renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
+
+    AppState *as = (AppState *)SDL_calloc(1, sizeof(AppState));
+    if (!as) {
+        return SDL_APP_FAILURE;
+    }
+
+    *appstate = as;
+
+    pacman_initialize(&as->pacman_ctx);
+
     return SDL_APP_CONTINUE;
 }
 
 /* This function runs when a new event (mouse input, keypresses, etc) occurs. */
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
-    if (event->type == SDL_EVENT_KEY_DOWN ||
-        event->type == SDL_EVENT_QUIT) {
-        return SDL_APP_SUCCESS;  /* end the program, reporting success to the OS. */
+    // PacManContext *ctx = &((AppState *)appstate)-> pacman_ctx;
+    switch(event->type){
+        case SDL_EVENT_QUIT:
+            return SDL_APP_SUCCESS;
+        // case SDL_EVENT_KEY_DOWN:
+        //     return handle_key_event_(ctx, event->key.scancode);
+        default:
+            break;
     }
     return SDL_APP_CONTINUE;
 }
@@ -31,7 +86,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void *appstate)
-{
+{   
+    AppState *as = (AppState *)appstate;
+    PacManContext *ctx = &as->pacman_ctx;
     SDL_FRect r;
 
     // Set up background
@@ -51,4 +108,10 @@ SDL_AppResult SDL_AppIterate(void *appstate)
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
+    if (appstate != NULL) {
+        AppState *as = (AppState *)appstate;
+        SDL_DestroyRenderer(as->renderer);
+        SDL_DestroyWindow(as->window);
+        SDL_free(as);
+    }
 }
