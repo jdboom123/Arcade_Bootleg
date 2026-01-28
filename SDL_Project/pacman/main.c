@@ -2,6 +2,8 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
+#define PACMAN_BLOCK_SIZE_IN_PIXELS 35
+
 static SDL_Window *window = NULL;
 static SDL_Renderer *renderer = NULL;
 
@@ -30,24 +32,20 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 /* This function runs once per frame, and is the heart of the program. */
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
-    const char *message = "Gay";
-    int w = 0, h = 0;
-    float x, y;
-    const float scale = 4.0f;
+    SDL_FRect r;
 
-    /* Center the message and scale it up */
-    SDL_GetRenderOutputSize(renderer, &w, &h);
-    SDL_SetRenderScale(renderer, scale, scale);
-    x = ((w / scale) - SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE * SDL_strlen(message)) / 2;
-    y = ((h / scale) - SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE) / 2;
-
-    /* Draw the message */
+    // Set up background
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderDebugText(renderer, x, y, message);
-    SDL_RenderPresent(renderer);
 
+    r.w = r.h = PACMAN_BLOCK_SIZE_IN_PIXELS;
+
+    // Draw Pac-Man
+    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+    r.x = r.y = 0;
+    SDL_RenderFillRect(renderer, &r);
+
+    SDL_RenderPresent(renderer);
     return SDL_APP_CONTINUE;
 }
 
